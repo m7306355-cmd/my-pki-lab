@@ -4,8 +4,8 @@
 
 ## 证书链架构
 Root CA (RSA 4096, 10年)
-└── Intermediate CA (RSA 2048, 5年)
-└── Server Certificate (RSA 2048, 1年)
+        └── Intermediate CA (RSA 2048, 5年)
+                          └── Server Certificate (RSA 2048, 1年)
 ## 技术栈
 
 - **OpenSSL** - 生成密钥对和 X.509 证书
