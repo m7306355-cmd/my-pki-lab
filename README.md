@@ -3,11 +3,15 @@
 使用 OpenSSL + Python 搭建的完整 PKI 证书体系。
 
 ## 证书链架构
+
+```
 Root CA (RSA 4096, 10年)
 
         └── Intermediate CA (RSA 2048, 5年)
         
                           └── Server Certificate (RSA 2048, 1年)
+```
+
 ## 技术栈
 
 - **OpenSSL** - 生成密钥对和 X.509 证书
@@ -22,7 +26,7 @@ Root CA (RSA 4096, 10年)
 2. 启动服务器：`python server.py`
 3. 访问：https://localhost:4443
 
-##运行结果示例
+## 运行结果示例
 
 https://github.com/user-attachments/assets/533b0dbd-1484-46db-aa62-f052c43985c0
 
