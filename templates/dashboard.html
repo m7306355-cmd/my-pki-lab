@@ -1,0 +1,160 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>用户中心 - Melissa PKI Lab</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }
+.header { background: #2c3e50; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 22px; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header a { color: #aaa; text-decoration: none; font-size: 13px; }
+.header a:hover { color: white; }
+.container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+.card { background: white; border-radius: 10px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.card h2 { font-size: 18px; color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+.tip { font-size: 13px; color: #888; margin-bottom: 16px; }
+.apply-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; }
+.form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; background: white; }
+.form-group input:focus, .form-group select:focus { border-color: #3498db; }
+.cert-type-selector { display: flex; gap: 12px; margin-bottom: 16px; }
+.cert-type-btn { flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center; background: white; transition: all 0.2s; }
+.cert-type-btn.active { border-color: #3498db; background: #e8f4fd; }
+.cert-type-btn .type-name { font-size: 16px; font-weight: bold; color: #2c3e50; margin-bottom: 4px; }
+.cert-type-btn .type-desc { font-size: 12px; color: #888; }
+.cert-type-btn.rsa-btn.active .type-name { color: #3498db; }
+.cert-type-btn.sm2-btn.active .type-name { color: #e74c3c; }
+.btn-apply { padding: 11px 32px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+.btn-apply:hover { background: #2980b9; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { background: #f8f9fa; padding: 12px 16px; text-align: left; color: #555; font-weight: 600; border-bottom: 2px solid #eee; }
+td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+tr:hover { background: #fafafa; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.badge-valid { background: #e8f8f0; color: #27ae60; }
+.badge-revoked { background: #fdecea; color: #e74c3c; }
+.badge-rsa { background: #e8f4fd; color: #3498db; }
+.badge-sm2 { background: #fdecea; color: #e74c3c; }
+.btn-download { background: #3498db; color: white; border: none; padding: 5px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn-download:hover { background: #2980b9; }
+.toast { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; border-radius: 8px; color: white; font-size: 14px; display: none; z-index: 200; }
+.toast-success { background: #27ae60; }
+.toast-error { background: #e74c3c; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>用户中心</h1>
+  <div class="header-right">
+    <span style="color:#aaa; font-size:13px;">欢迎，{{ username }}</span>
+    <a href="/">首页</a>
+    <a href="/user_logout">退出登录</a>
+  </div>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>申请新证书</h2>
+    <p class="tip">选择证书类型，填写信息后由对应 CA 签发，有效期 365 天。</p>
+    <div class="cert-type-selector">
+      <div class="cert-type-btn rsa-btn active" onclick="selectType('rsa')">
+        <div class="type-name">RSA 证书</div>
+        <div class="type-desc">国际标准 · RSA 2048 · SHA-256</div>
+      </div>
+      <div class="cert-type-btn sm2-btn" onclick="selectType('sm2')">
+        <div class="type-name">SM2 证书</div>
+        <div class="type-desc">国密标准 · SM2 · SM3</div>
+      </div>
+    </div>
+    <div class="apply-form">
+      <div class="form-group">
+        <label>通用名 CN（如域名或姓名）</label>
+        <input type="text" id="cert-cn" placeholder="例如：mysite.com">
+      </div>
+      <div class="form-group">
+        <label id="pass-label">中间 CA 私钥口令</label>
+        <input type="password" id="ca-pass" placeholder="请输入中间 CA 口令">
+      </div>
+    </div>
+    <button class="btn-apply" onclick="applyCert()">申请证书</button>
+  </div>
+  <div class="card">
+    <h2>我的证书</h2>
+    <table>
+      <tr>
+        <th>类型</th>
+        <th>通用名 CN</th>
+        <th>序列号</th>
+        <th>申请时间</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+      {% for cert in certs %}
+      <tr>
+        <td><span class="badge badge-{{ cert.cert_type | lower }}">{{ cert.cert_type }}</span></td>
+        <td>{{ cert.cn }}</td>
+        <td><code>{{ cert.serial }}</code></td>
+        <td>{{ cert.issued_at }}</td>
+        <td><span class="badge badge-{{ cert.status }}">
+          {% if cert.status == 'valid' %}有效{% else %}已吊销{% endif %}
+        </span></td>
+        <td>
+          {% if cert.status == 'valid' %}
+          <a class="btn-download" href="/download_cert/{{ cert.cert_name }}">下载证书</a>
+          {% else %}
+          <span style="color:#aaa; font-size:12px;">已吊销</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center; color:#aaa; padding:24px;">暂无证书，请申请</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedType = 'rsa';
+
+function selectType(type) {
+  selectedType = type;
+  document.querySelectorAll('.cert-type-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.' + type + '-btn').classList.add('active');
+  document.getElementById('pass-label').textContent =
+    type === 'sm2' ? 'SM2 中间 CA 口令' : 'RSA 中间 CA 口令';
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-' + type;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function applyCert() {
+  const cn = document.getElementById('cert-cn').value.trim();
+  const pass = document.getElementById('ca-pass').value.trim();
+  if (!cn) { showToast('请填写通用名 CN', 'error'); return; }
+  if (!pass) { showToast('请输入中间 CA 口令', 'error'); return; }
+  const formData = new FormData();
+  formData.append('cn', cn);
+  formData.append('password', pass);
+  formData.append('cert_type', selectedType);
+  fetch('/apply_cert', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.message, 'error');
+      }
+    });
+}
+</script>
+</body>
+</html>

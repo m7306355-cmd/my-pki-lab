@@ -1,0 +1,251 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>管理后台 - Melissa PKI Lab</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }
+.header { background: #2c3e50; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 22px; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header a { color: #aaa; text-decoration: none; font-size: 13px; }
+.header a:hover { color: white; }
+.container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+.card { background: white; border-radius: 10px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.card h2 { font-size: 18px; color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+.card h2.sm2-title { border-bottom-color: #e74c3c; color: #c0392b; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { background: #f8f9fa; padding: 12px 16px; text-align: left; color: #555; font-weight: 600; border-bottom: 2px solid #eee; }
+td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+tr:hover { background: #fafafa; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.badge-valid { background: #e8f8f0; color: #27ae60; }
+.badge-revoked { background: #fdecea; color: #e74c3c; }
+.badge-expired { background: #fef9e7; color: #f39c12; }
+.btn-revoke { background: #e74c3c; color: white; border: none; padding: 5px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.btn-revoke:hover { background: #c0392b; }
+.btn-revoked { background: #ccc; color: white; border: none; padding: 5px 14px; border-radius: 4px; font-size: 12px; cursor: not-allowed; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+.modal.active { display: flex; }
+.modal-box { background: white; border-radius: 10px; padding: 32px; width: 400px; }
+.modal-box h3 { margin-bottom: 8px; color: #2c3e50; font-size: 16px; }
+.modal-box p { color: #666; font-size: 13px; margin-bottom: 20px; }
+.modal-box input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 16px; outline: none; }
+.modal-box input:focus { border-color: #3498db; }
+.modal-btns { display: flex; gap: 12px; }
+.btn-confirm { flex: 1; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.btn-cancel { flex: 1; padding: 10px; background: #f8f9fa; color: #555; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.toast { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; border-radius: 8px; color: white; font-size: 14px; display: none; z-index: 200; }
+.toast-success { background: #27ae60; }
+.toast-error { background: #e74c3c; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>PKI 管理后台</h1>
+  <div class="header-right">
+    <span style="color:#aaa; font-size:13px;">欢迎，admin</span>
+    <a href="/">首页</a>
+    <a href="/logout">退出登录</a>
+  </div>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>RSA 中间 CA 签发的证书</h2>
+    <table>
+      <tr>
+        <th>序列号</th>
+        <th>CN（通用名）</th>
+        <th>到期时间</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+      {% for cert in intermediate_certs %}
+      <tr>
+        <td><code>{{ cert.serial }}</code></td>
+        <td>{{ cert.cn }}</td>
+        <td>{{ cert.expiry[:8] }}</td>
+        <td><span class="badge badge-{{ cert.status }}">{{ cert.status_text }}</span></td>
+        <td>
+          {% if cert.status == 'valid' %}
+          <button class="btn-revoke" onclick="openModal('{{ cert.serial }}', 'intermediate', '{{ cert.cn }}')">吊销</button>
+          {% else %}
+          <button class="btn-revoked" disabled>已吊销</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center; color:#aaa; padding:24px;">暂无证书记录</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>RSA 根 CA 签发的证书</h2>
+    <table>
+      <tr>
+        <th>序列号</th>
+        <th>CN（通用名）</th>
+        <th>到期时间</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+      {% for cert in root_certs %}
+      <tr>
+        <td><code>{{ cert.serial }}</code></td>
+        <td>{{ cert.cn }}</td>
+        <td>{{ cert.expiry[:8] }}</td>
+        <td><span class="badge badge-{{ cert.status }}">{{ cert.status_text }}</span></td>
+        <td>
+          {% if cert.status == 'valid' %}
+          <button class="btn-revoke" onclick="openModal('{{ cert.serial }}', 'root', '{{ cert.cn }}')">吊销</button>
+          {% else %}
+          <button class="btn-revoked" disabled>已吊销</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center; color:#aaa; padding:24px;">暂无证书记录</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 class="sm2-title">SM2 证书列表</h2>
+    <table>
+      <tr>
+        <th>用户</th>
+        <th>CN（通用名）</th>
+        <th>序列号</th>
+        <th>申请时间</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+      {% for cert in sm2_certs %}
+      <tr>
+        <td>{{ cert.username }}</td>
+        <td>{{ cert.cn }}</td>
+        <td><code>{{ cert.serial }}</code></td>
+        <td>{{ cert.issued_at }}</td>
+        <td><span class="badge badge-{{ cert.status }}">
+          {% if cert.status == 'valid' %}有效{% else %}已吊销{% endif %}
+        </span></td>
+        <td>
+          {% if cert.status == 'valid' %}
+          <button class="btn-revoke" onclick="openSm2Modal('{{ cert.cert_name }}', '{{ cert.cn }}')">吊销</button>
+          {% else %}
+          <button class="btn-revoked" disabled>已吊销</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center; color:#aaa; padding:24px;">暂无 SM2 证书记录</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>确认吊销 RSA 证书</h3>
+    <p id="modal-desc">确定要吊销该证书吗？此操作不可撤销。</p>
+    <input type="password" id="ca-password" placeholder="请输入 CA 私钥口令">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" onclick="doRevoke()">确认吊销</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="sm2-modal">
+  <div class="modal-box">
+    <h3>确认吊销 SM2 证书</h3>
+    <p id="sm2-modal-desc">确定要吊销该 SM2 证书吗？此操作不可撤销。</p>
+    <input type="password" id="sm2-ca-password" placeholder="请输入 SM2 中间 CA 口令">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeSm2Modal()">取消</button>
+      <button class="btn-confirm" onclick="doRevokeSm2()">确认吊销</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentSerial = '';
+let currentCaType = '';
+let currentSm2CertName = '';
+
+function openModal(serial, caType, cn) {
+  currentSerial = serial;
+  currentCaType = caType;
+  document.getElementById('modal-desc').textContent = '确定要吊销证书 "' + cn + '"（序列号：' + serial + '）吗？此操作不可撤销。';
+  document.getElementById('ca-password').value = '';
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+function openSm2Modal(certName, cn) {
+  currentSm2CertName = certName;
+  document.getElementById('sm2-modal-desc').textContent = '确定要吊销 SM2 证书 "' + cn + '" 吗？此操作不可撤销。';
+  document.getElementById('sm2-ca-password').value = '';
+  document.getElementById('sm2-modal').classList.add('active');
+}
+
+function closeSm2Modal() {
+  document.getElementById('sm2-modal').classList.remove('active');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-' + type;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function doRevoke() {
+  const password = document.getElementById('ca-password').value;
+  if (!password) { showToast('请输入 CA 私钥口令', 'error'); return; }
+  const formData = new FormData();
+  formData.append('serial', currentSerial);
+  formData.append('ca_type', currentCaType);
+  formData.append('password', password);
+  fetch('/revoke', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      closeModal();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.message, 'error');
+      }
+    });
+}
+
+function doRevokeSm2() {
+  const password = document.getElementById('sm2-ca-password').value;
+  if (!password) { showToast('请输入 SM2 中间 CA 口令', 'error'); return; }
+  const formData = new FormData();
+  formData.append('cert_name', currentSm2CertName);
+  formData.append('password', password);
+  fetch('/revoke_sm2', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      closeSm2Modal();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(data.message, 'error');
+      }
+    });
+}
+</script>
+</body>
+</html>

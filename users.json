@@ -1,0 +1,47 @@
+{
+  "melissa": {
+    "password": "melissa",
+    "org": "jnu",
+    "certs": [
+      {
+        "cn": "mysite.com",
+        "serial": "02",
+        "cert_name": "melissa_mysite.com_20260609193239",
+        "issued_at": "2026-06-09 19:32",
+        "status": "revoked"
+      },
+      {
+        "cn": "test.com",
+        "serial": "BAAAA09C1DD1CE9437F7B419",
+        "cert_name": "melissa_test.com_sm2_20260609202659",
+        "cert_type": "SM2",
+        "issued_at": "2026-06-09 20:26",
+        "status": "revoked"
+      },
+      {
+        "cn": "user.com",
+        "serial": "3FA63FED43E9E3529F71CC02",
+        "cert_name": "melissa_user.com_sm2_20260609203132",
+        "cert_type": "SM2",
+        "issued_at": "2026-06-09 20:31",
+        "status": "revoked"
+      },
+      {
+        "cn": "yoursite.com",
+        "serial": "1C219ACC2C427E6DCBDFF894",
+        "cert_name": "melissa_yoursite.com_sm2_20260609205246",
+        "cert_type": "SM2",
+        "issued_at": "2026-06-09 20:52",
+        "status": "revoked"
+      },
+      {
+        "cn": "hello.com",
+        "serial": "FE8EC03189E35E06875DBDCF",
+        "cert_name": "melissa_hello.com_sm2_20260609205904",
+        "cert_type": "SM2",
+        "issued_at": "2026-06-09 20:59",
+        "status": "revoked"
+      }
+    ]
+  }
+}

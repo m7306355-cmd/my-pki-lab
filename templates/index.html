@@ -1,0 +1,224 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Melissa PKI Lab</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }
+.header { background: #2c3e50; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 24px; }
+.header-btns { display: flex; gap: 12px; }
+.header-btns a { padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; }
+.btn-login { background: transparent; color: white; border: 1px solid #aaa; }
+.btn-login:hover { border-color: white; }
+.btn-register { background: #3498db; color: white; }
+.btn-register:hover { background: #2980b9; }
+.btn-admin { background: transparent; color: #aaa; border: 1px solid #555; }
+.btn-admin:hover { color: white; border-color: #aaa; }
+.container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+.card { background: white; border-radius: 10px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.card h2 { font-size: 18px; color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+.chain { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: center; margin-bottom: 24px; }
+.chain-item { display: flex; align-items: center; gap: 0; }
+.chain-item:not(:last-child)::after { content: '→'; font-size: 24px; color: #3498db; padding: 0 8px; text-align: center; min-width: 30px; }
+.chain-item-sm2:not(:last-child)::after { content: '→'; font-size: 24px; color: #e74c3c; padding: 0 8px; text-align: center; min-width: 30px; }
+.cert-box { background: #f8f9fa; border: 2px solid #3498db; border-radius: 8px; padding: 16px 20px; text-align: center; flex: 1; min-width: 160px; }
+.cert-box-sm2 { background: #fff5f5; border: 2px solid #e74c3c; border-radius: 8px; padding: 16px 20px; text-align: center; flex: 1; min-width: 160px; }
+.cert-box .label, .cert-box-sm2 .label { font-size: 11px; color: #888; margin-bottom: 6px; font-weight: 500; }
+.cert-box .name { font-size: 14px; font-weight: bold; color: #2c3e50; margin-bottom: 6px; }
+.cert-box-sm2 .name { font-size: 14px; font-weight: bold; color: #c0392b; margin-bottom: 6px; }
+.cert-box .detail, .cert-box-sm2 .detail { font-size: 11px; color: #666; line-height: 1.6; }
+.arrow { font-size: 28px; color: #3498db; padding: 0 12px; }
+.arrow-sm2 { font-size: 28px; color: #e74c3c; padding: 0 12px; }
+.chain-label { font-weight: bold; font-size: 14px; margin-bottom: 12px; }
+.chain-label-rsa { color: #3498db; }
+.chain-label-sm2 { color: #e74c3c; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.info-item { background: #f8f9fa; border-radius: 6px; padding: 14px; }
+.info-item .key { font-size: 12px; color: #888; margin-bottom: 4px; }
+.info-item .value { font-size: 14px; font-weight: bold; color: #2c3e50; }
+.crl-links { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+.crl-link { background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 12px 20px; text-decoration: none; color: #2c3e50; font-size: 14px; }
+.crl-link:hover { background: #e8f4fd; border-color: #3498db; }
+.btn-dl { display: inline-block; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; background: #3498db; color: white; margin-right: 12px; }
+.btn-dl:hover { background: #2980b9; }
+.btn-dl-sm2 { display: inline-block; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; background: #e74c3c; color: white; }
+.btn-dl-sm2:hover { background: #c0392b; }
+.hero { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; border-radius: 10px; padding: 40px; margin-bottom: 24px; text-align: center; }
+.hero h2 { font-size: 26px; margin-bottom: 12px; }
+.hero p { font-size: 15px; opacity: 0.85; margin-bottom: 24px; }
+.hero-btns { display: flex; justify-content: center; gap: 16px; }
+.hero-btns a { padding: 12px 32px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: bold; }
+.hero-btn-primary { background: white; color: #2c3e50; }
+.hero-btn-primary:hover { background: #f0f0f0; }
+.hero-btn-secondary { background: transparent; color: white; border: 2px solid white; }
+.hero-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+.divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+.footer { text-align: center; color: #aaa; font-size: 13px; margin-top: 40px; padding-bottom: 40px; }
+@media (max-width: 768px) {
+  .chain { grid-template-columns: 1fr; }
+  .chain-item::after { display: none; }
+  .chain-item { position: relative; }
+  .chain-item:not(:last-child)::before { content: '↓'; display: block; text-align: center; font-size: 20px; color: #3498db; padding: 8px 0; }
+  .chain-item-sm2:not(:last-child)::before { content: '↓'; display: block; text-align: center; font-size: 20px; color: #e74c3c; padding: 8px 0; }
+}
+@media (max-width: 480px) {
+  .card { padding: 20px; }
+  .cert-box, .cert-box-sm2 { padding: 12px 16px; min-width: auto; }
+  .cert-box .name, .cert-box-sm2 .name { font-size: 13px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Melissa PKI Lab</h1>
+  <div class="header-btns">
+    {% if logged_in_admin %}
+      <span style="color:#aaa; font-size:13px; padding: 8px 4px;">欢迎，admin</span>
+      <a href="/admin" class="btn-register">管理后台</a>
+      <a href="/logout" class="btn-login">退出登录</a>
+    {% elif logged_in_user %}
+      <span style="color:#aaa; font-size:13px; padding: 8px 4px;">欢迎，{{ logged_in_user }}</span>
+      <a href="/dashboard" class="btn-register">用户中心</a>
+      <a href="/user_logout" class="btn-login">退出登录</a>
+    {% else %}
+      <a href="/user_login" class="btn-login">用户登录</a>
+      <a href="/register" class="btn-register">用户注册</a>
+      <a href="/login" class="btn-admin">管理员</a>
+    {% endif %}
+  </div>
+</div>
+<div class="container">
+  <div class="hero">
+    <h2>私有 PKI 证书管理系统</h2>
+    <p>同时支持国际标准（RSA）和国密标准（SM2）两套独立 PKI 证书链</p>
+    <div class="hero-btns">
+      {% if logged_in_admin %}
+        <a href="/admin" class="hero-btn-primary">进入管理后台</a>
+      {% elif logged_in_user %}
+        <a href="/dashboard" class="hero-btn-primary">进入用户中心</a>
+      {% else %}
+        <a href="/register" class="hero-btn-primary">注册账号申请证书</a>
+        <a href="/user_login" class="hero-btn-secondary">已有账号，登录</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>证书链结构</h2>
+    <p style="font-size:13px; color:#888; margin-bottom:20px;">本系统同时支持国际标准（RSA）和国密标准（SM2）两套独立的 PKI 证书链，用户可按需选择申请。</p>
+
+    <p class="chain-label chain-label-rsa">RSA 证书链（国际标准）</p>
+    <div class="chain">
+      <div class="chain-item">
+        <div class="cert-box">
+          <div class="label">根证书</div>
+          <div class="name">My Root CA</div>
+          <div class="detail">RSA 4096 · SHA-256<br>有效期 10 年</div>
+        </div>
+      </div>
+      <div class="chain-item">
+        <div class="cert-box">
+          <div class="label">中间证书</div>
+          <div class="name">My Intermediate CA</div>
+          <div class="detail">RSA 2048 · SHA-256<br>有效期 5 年</div>
+        </div>
+      </div>
+      <div class="chain-item">
+        <div class="cert-box">
+          <div class="label">服务器/用户证书</div>
+          <div class="name">终端实体</div>
+          <div class="detail">RSA 2048 · SHA-256<br>有效期 1 年</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <p class="chain-label chain-label-sm2">SM2 证书链（国密标准）</p>
+    <div class="chain">
+      <div class="chain-item chain-item-sm2">
+        <div class="cert-box-sm2">
+          <div class="label">根证书</div>
+          <div class="name">SM2 Root CA</div>
+          <div class="detail">SM2 · SM3<br>有效期 10 年</div>
+        </div>
+      </div>
+      <div class="chain-item chain-item-sm2">
+        <div class="cert-box-sm2">
+          <div class="label">中间证书</div>
+          <div class="name">SM2 Intermediate CA</div>
+          <div class="detail">SM2 · SM3<br>有效期 5 年</div>
+        </div>
+      </div>
+      <div class="chain-item chain-item-sm2">
+        <div class="cert-box-sm2">
+          <div class="label">服务器/用户证书</div>
+          <div class="name">终端实体</div>
+          <div class="detail">SM2 · SM3<br>有效期 1 年</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>PKI 体系信息</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="key">RSA 根 CA 算法</div>
+        <div class="value">RSA 4096 位</div>
+      </div>
+      <div class="info-item">
+        <div class="key">SM2 根 CA 算法</div>
+        <div class="value">SM2（sm2p256v1）</div>
+      </div>
+      <div class="info-item">
+        <div class="key">RSA 签名算法</div>
+        <div class="value">SHA-256 with RSA</div>
+      </div>
+      <div class="info-item">
+        <div class="key">SM2 签名算法</div>
+        <div class="value">SM2 with SM3</div>
+      </div>
+      <div class="info-item">
+        <div class="key">私钥保护</div>
+        <div class="value">AES-256 加密</div>
+      </div>
+      <div class="info-item">
+        <div class="key">证书标准</div>
+        <div class="value">X.509 v3</div>
+      </div>
+      <div class="info-item">
+        <div class="key">吊销机制</div>
+        <div class="value">CRL（每30天更新）</div>
+      </div>
+      <div class="info-item">
+        <div class="key">HTTPS 服务</div>
+        <div class="value"><a href="https://localhost:4443" target="_blank">localhost:4443</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>CRL 吊销列表</h2>
+    <p style="color:#666; font-size:14px; margin-bottom:12px;">证书吊销列表记录所有被吊销的证书，每30天自动更新。</p>
+    <div class="crl-links">
+      <a class="crl-link" href="http://localhost:8080/crl/root-ca.crl" target="_blank">RSA 根 CA CRL</a>
+      <a class="crl-link" href="http://localhost:8080/crl/intermediate-ca.crl" target="_blank">RSA 中间 CA CRL</a>
+      <a class="crl-link" href="http://localhost:8080/crl/sm2-root-ca.crl" target="_blank">SM2 根 CA CRL</a>
+      <a class="crl-link" href="http://localhost:8080/crl/sm2-intermediate-ca.crl" target="_blank">SM2 中间 CA CRL</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>根证书下载</h2>
+    <p style="color:#666; font-size:14px; margin-bottom:16px;">将根证书导入系统信任库后，浏览器将信任本 PKI 体系签发的所有证书。</p>
+    <a class="btn-dl" href="http://localhost:8080/root-ca.pem" target="_blank">下载 RSA 根证书</a>
+    <a class="btn-dl-sm2" href="http://localhost:8080/sm2-root-ca.pem" target="_blank">下载 SM2 根证书</a>
+  </div>
+</div>
+<div class="footer">Melissa PKI Lab · 基于 OpenSSL + GmSSL 搭建的双标准私有 PKI 体系</div>
+</body>
+</html>
+
