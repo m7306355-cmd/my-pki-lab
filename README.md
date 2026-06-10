@@ -13,6 +13,10 @@
 - HTTPS 演示：https://localhost:4443
 - CRL 服务：http://localhost:8080
 
+## 演示视频
+
+<!-- Failed to upload "43475c4092ec9220ef829701ce441e48.mp4" -->
+
 ## 账号
 
 - 管理员：admin / admin123
