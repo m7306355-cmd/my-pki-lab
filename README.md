@@ -15,7 +15,7 @@
 
 ## 演示视频
 
-<!-- Failed to upload "43475c4092ec9220ef829701ce441e48.mp4" -->
+https://github.com/user-attachments/assets/89c16a02-3d42-4cca-86f6-62bdc4362cb0
 
 ## 账号
 
